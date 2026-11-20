@@ -4,6 +4,8 @@ public class Coin : MonoBehaviour
 {
     [SerializeField] int value = 1;
     [SerializeField] float spinSpeed = 120f; // degrees per second
+    [SerializeField] AudioClip sound;
+    [SerializeField] GameObject sparkle;     // Stop Action Destroy, so it cleans itself up
 
     bool collected;
 
@@ -20,6 +22,10 @@ public class Coin : MonoBehaviour
 
         collected = true;
         GameManager.Instance.AddScore(value);
+
+        // the sound plays on the SfxPlayer and the sparkle is its own object, so neither goes with the coin
+        SfxPlayer.Instance.Play(sound);
+        Instantiate(sparkle, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
 }
