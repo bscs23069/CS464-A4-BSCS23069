@@ -126,3 +126,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BouncePad
   bounceSpeed: 9
+  sound: {fileID: 8300000, guid: 9f4d12713c307d84b92a33df3c110941, type: 3}
