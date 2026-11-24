@@ -51,8 +51,15 @@ MonoBehaviour:
   player: {fileID: 0}
   respawnPoint: {fileID: 0}
   scoreText: {fileID: 0}
-  heartsText: {fileID: 0}
   livesText: {fileID: 0}
+  timeText: {fileID: 0}
+  messagePanel: {fileID: 0}
   messageText: {fileID: 0}
   winPanel: {fileID: 0}
+  winTimeText: {fileID: 0}
+  nextLabel: {fileID: 0}
+  winFirstButton: {fileID: 0}
   losePanel: {fileID: 0}
+  loseFirstButton: {fileID: 0}
+  winSound: {fileID: 8300000, guid: 6d04cdbdfc1b945449f1e93cfa0e3140, type: 3}
+  loseSound: {fileID: 8300000, guid: 7dc04150f12c4b447baefffabb2b72a4, type: 3}

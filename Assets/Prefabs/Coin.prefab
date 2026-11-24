@@ -127,3 +127,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Coin
   value: 1
   spinSpeed: 120
+  sound: {fileID: 8300000, guid: f1a9271e1c43c1548a15c4863c0fafcc, type: 3}
+  sparkle: {fileID: 2420625781104364619, guid: d4c0a3a8efdc40946b4fdb9c31cd76f5, type: 3}

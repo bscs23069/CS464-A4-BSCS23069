@@ -1,7 +1,6 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,35 +15,53 @@ public class GameManager : MonoBehaviour
     [Header("Set in each level")]
     [SerializeField] Health player;
     [SerializeField] Transform respawnPoint;
+
+    [Header("On the HUD prefab")]
     [SerializeField] TMP_Text scoreText;
-    [SerializeField] TMP_Text heartsText;
     [SerializeField] TMP_Text livesText;
+    [SerializeField] TMP_Text timeText;
+    [SerializeField] GameObject messagePanel;
     [SerializeField] TMP_Text messageText;
     [SerializeField] GameObject winPanel;
+    [SerializeField] TMP_Text winTimeText;
+    [SerializeField] TMP_Text nextLabel;
+    [SerializeField] GameObject winFirstButton;
     [SerializeField] GameObject losePanel;
+    [SerializeField] GameObject loseFirstButton;
+
+    [Header("Sounds")]
+    [SerializeField] AudioClip winSound;
+    [SerializeField] AudioClip loseSound;
 
     int score;
-    bool over;
+    public bool IsOver { get; private set; }
 
     void Awake()
     {
         Instance = this;
     }
 
+    void OnEnable() => player.Died += PlayerDied;
+    void OnDisable() => player.Died -= PlayerDied;
+
     void Start()
     {
-        Time.timeScale = 1f;
         winPanel.SetActive(false);
         losePanel.SetActive(false);
-        messageText.text = "";
+        messagePanel.SetActive(false);
         UpdateScore();
-        UpdateHearts();
         UpdateLives();
+    }
+
+    void Update()
+    {
+        if (!IsOver)
+            timeText.SetText("Time {0:1} s", Time.timeSinceLevelLoad);
     }
 
     public void AddScore(int amount)
     {
-        if (over)
+        if (IsOver)
             return;
 
         score += amount;
@@ -55,18 +72,42 @@ public class GameManager : MonoBehaviour
 
     public void ReachedGoal()
     {
-        if (over)
+        if (IsOver)
             return;
 
         if (score >= targetScore)
-            Win();
+            Won();
         else
             ShowMessage($"Collect {targetScore - score} more coins first");
     }
 
-    public void PlayerDied()
+    // build index n is Level n, so one number is the scene, the save key and the next unlock
+    public void Won()
     {
-        if (over)
+        int level = gameObject.scene.buildIndex;
+        float time = Time.timeSinceLevelLoad;   // scaled time, so time spent paused doesn't count
+        bool best = SaveData.Record(level, time);
+        SaveData.Unlock(level + 1);
+        ShowWinScreen(level, time, best);
+    }
+
+    void ShowWinScreen(int level, float time, bool best)
+    {
+        IsOver = true;
+        Time.timeScale = 0f;
+        timeText.SetText("Time {0:1} s", time);
+        winTimeText.text = best
+            ? $"Time {time:0.0} s  ·  <color=#5EE06B>New best!</color>"
+            : $"Time {time:0.0} s  ·  Best {SaveData.Best(level):0.0} s";
+        nextLabel.text = level == SaveData.LevelCount ? "Credits" : "Next level";
+        winPanel.SetActive(true);
+        PauseMenu.Select(winFirstButton);
+        SfxPlayer.Instance.Play(winSound);
+    }
+
+    void PlayerDied()
+    {
+        if (IsOver)
             return;
 
         lives--;
@@ -93,49 +134,33 @@ public class GameManager : MonoBehaviour
 
     public void SetCheckpoint(Transform point) => respawnPoint = point;
 
-    void Win()
-    {
-        over = true;
-        winPanel.SetActive(true);
-        Time.timeScale = 0f;
-    }
-
     void Lose()
     {
-        over = true;
-        losePanel.SetActive(true);
+        IsOver = true;
         Time.timeScale = 0f;
-    }
-
-    public void Restart()
-    {
-        // timeScale survives a scene load, so put it back first
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    public void NextLevel()
-    {
-        Time.timeScale = 1f;
-        int next = SceneManager.GetActiveScene().buildIndex + 1;
-        SceneManager.LoadScene(next < SceneManager.sceneCountInBuildSettings ? next : 0);
+        losePanel.SetActive(true);
+        PauseMenu.Select(loseFirstButton);
+        SfxPlayer.Instance.Play(loseSound);
     }
 
     // each text is set only when its number changes
-    void UpdateScore() => scoreText.text = $"Coins: {score}/{targetScore}";
-    void UpdateLives() => livesText.text = $"Lives: {Mathf.Max(lives, 0)}";
-    public void UpdateHearts() => heartsText.text = $"Hearts: {Mathf.Max(player.Current, 0)}/{player.Max}";
+    void UpdateScore() => scoreText.text = $"Coins {score}/{targetScore}";
+    void UpdateLives() => livesText.text = $"Lives {Mathf.Max(lives, 0)}";
 
     void ShowMessage(string text)
     {
         messageText.text = text;
-        StartCoroutine(ClearMessage(text));
+        messagePanel.SetActive(true);
+        if (clearing != null)
+            StopCoroutine(clearing); // a new message gets its own 2 s
+        clearing = StartCoroutine(ClearMessage());
     }
 
-    IEnumerator ClearMessage(string text)
+    Coroutine clearing;
+
+    IEnumerator ClearMessage()
     {
         yield return new WaitForSeconds(2f);
-        if (messageText.text == text)
-            messageText.text = "";
+        messagePanel.SetActive(false);
     }
 }

@@ -20,6 +20,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float squashDuration = 0.25f;
     [SerializeField] float minAirTime = 0.1f;
 
+    [Header("Sound")]
+    [SerializeField] AudioClip jumpSound;
+
     // power-ups change this, and the player runs the timer so it outlives the pickup
     public float speedMultiplier = 1f;
     Coroutine boost;
@@ -53,6 +56,13 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // Update still runs at a time scale of 0, so ignore the keys while paused or on an end screen
+        if (PauseMenu.IsPaused || GameManager.Instance.IsOver)
+        {
+            move = Vector3.zero;
+            return;
+        }
+
         // move relative to the camera, flat on the ground
         Vector2 input = moveAction.ReadValue<Vector2>();
         Vector3 forward = cam.forward;
@@ -111,6 +121,7 @@ public class PlayerController : MonoBehaviour
             float g = -Physics.gravity.y;
             float v0 = Mathf.Sqrt(2f * g * jumpHeight);
             rb.AddForce(Vector3.up * rb.mass * v0, ForceMode.Impulse);
+            SfxPlayer.Instance.Play(jumpSound, 0.7f);
         }
         else if (rising && rb.linearVelocity.y <= 0f)
         {

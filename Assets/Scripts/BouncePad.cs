@@ -4,6 +4,7 @@ using UnityEngine;
 public class BouncePad : MonoBehaviour
 {
     [SerializeField] float bounceSpeed = 9f; // m/s up: v² / 2g = 81 / 19.6 = 4.1 m
+    [SerializeField] AudioClip sound;
 
     void OnTriggerEnter(Collider other)
     {
@@ -14,5 +15,6 @@ public class BouncePad : MonoBehaviour
         // VelocityChange ignores mass; cancel the fall first so every bounce is the same
         float change = bounceSpeed - body.linearVelocity.y;
         body.AddForce(Vector3.up * change, ForceMode.VelocityChange);
+        SfxPlayer.Instance.Play(sound);
     }
 }

@@ -1,48 +1,83 @@
-# CS464 Assignment 03 · Mayasa Fakhar · BSCS23069
+# CS464 Assignment 04 · Mayasa Fakhar · BSCS23069
 
-- **Video (60–120 s):** https://drive.google.com/file/d/1Cw5-_Xo8BsvtkP-Frc5jWw8LHSaTJVvO/view?usp=sharing
-- **Project:** a new Unity 6.3 project (6000.3.27f1) with five new scenes, built for this assignment. Only the player controller, camera follow and easing scripts come from my Assignment 02, since this assignment builds on that controller
-- **Controls:** WASD or the arrow keys to move (the camera is behind you, so W is always forward), Space to jump
-- **To win a level:** collect enough coins to open the goal (Level01 6 of 6, Level02 5 of 6, Level03 8 of 12, Level04 5 of 6, Level05 6 of 7), then reach the green flag
+**Video (90–180 s):** https://drive.google.com/file/d/1ZqbBVljMwQf5cPMo4yzNFDfGOMqeMOgA/view?usp=sharing
 
-## Levels
+<p>
+<img src="Docs/hud-16x9.png" width="320" alt="The HUD at 16:9">
+<img src="Docs/hud-4x3.png" width="240" alt="The HUD at 4:3">
+<img src="Docs/hud-gray.png" width="320" alt="The HUD in grayscale">
+</p>
 
-| Level | Screenshot | New idea | Combined with |
+This repo is a copy of my Assignment 03 repo (history and both branches), carried on in Unity 6.3 (6000.3.27f1). The five levels are the same ones, now called **Flag Run**, with a main menu before them and credits after.
+
+- **Play:** open `Assets/Scenes/MainMenu.unity` and press Play. Any level also plays on its own.
+- **Controls:** WASD or the arrow keys to move, Space to jump, Esc to pause. Every menu works with the arrow keys and Enter, or the mouse.
+- **To win a level:** collect enough coins to open the goal, then reach the green flag.
+
+## What I added
+
+**Interface.** The HUD, the pause menu, the win screen and the game-over screen are one prefab, `Assets/Prefabs/HUD.prefab`, in all five levels. The health bar is two filled Images: a green fill and a pale lag bar behind it (`HealthBar.cs`, 0.4 s wait, then 0.8 of the bar per second). Coins, time and lives are TMP text. Every text sits on a solid dark panel, and each panel is anchored to its own corner. Pause, win and game over each select their first button as they open (`PauseMenu.Select`). Pointing at a button with the mouse selects it too, so there is only one highlight: a light ring round the selected button or slider.
+
+**Sound.** `SfxPlayer` (four sources on the SFX group) plays every effect with PlayOneShot and a random pitch of ±2 semitones. There are seven effects: pickup, hit, jump, bounce, menu click, win and lose. Coins and pads play through it, so nothing is cut off when a coin is destroyed. `PersistentMusic` loops one track on the Music group. `Assets/Audio/Mixer.mixer` has Music and SFX groups with `MusicVolume` and `SfxVolume` exposed. The main menu and the pause menu have a Music slider and a Sound effects slider. `VolumeSlider` sits on the Canvas and sets `Log10(v) × 20` dB.
+
+**Feedback.** A coin spawns `PickupSparkle`, one burst with Stop Action Destroy. `Health` raises `Damaged`, `Restored` and `Died`. Four listeners answer `Damaged`: `HealthBarListener` (the bar), `HurtSound`, `HitSparks` (one burst on the player) and `HitFlash` (a coral flash). The GameManager listens for `Died`. All of them use `+=` in OnEnable and `−=` in OnDisable.
+
+**Level flow.** The Scene List is MainMenu 0, Level01–05 at 1–5 and Credits 6. `LevelLoader` is the only script that loads a scene. It loads in the background behind a bar (`Mathf.Clamp01(op.progress / 0.9f)`) and wraps to the menu after Credits. `SaveData` is the only script that spells a PlayerPrefs key. A win records the time, unlocks the next level and shows the win screen; its Next level button calls `LoadNext()`. `LevelSelect` sets the menu's five buttons from `SaveData`.
+
+<p>
+<img src="Docs/menu.png" width="320" alt="The main menu with two best times and Level 3 newly open">
+<img src="Docs/pause.png" width="320" alt="The pause menu">
+<img src="Docs/loading.png" width="320" alt="The loading bar">
+</p>
+<p>
+<img src="Docs/win.png" width="320" alt="The win screen">
+<img src="Docs/lose.png" width="320" alt="The game-over screen">
+<img src="Docs/credits.png" width="320" alt="The credits">
+</p>
+
+## Settings
+
+| Part | Setting | Value | Why |
 |---|---|---|---|
-| Level01 | <img src="Docs/level01.png" width="320"> | Coins, the goal, and a pink bounce pad next to a 3 m block with two coins on top | Nothing hurts yet. There is one 3 m pit across the level, which the 1.8 m jump clears easily, so a fall can cost a life but you learn it safely |
-| Level02 | <img src="Docs/level02.png" width="320"> | Spikes, a heart at a time. The first patch is beside the start, off the route, so you can touch it safely | A 3 m walkway with no walls and spikes on half of it, a coin between two spike strips 1.4 m apart, and a step up to a terrace mostly covered in spikes |
-| Level03 | <img src="Docs/level03.png" width="320"> | A guard that patrols a loop round the big block, chases you inside 6 m and gives up at 9 m | Spikes just outside its loop, so running away carelessly costs a heart, and coins on its route |
-| Level04 | <img src="Docs/level04.png" width="320"> | The crusher. The first one is beside the start, off the route, with a coin on it | A crusher on a bridge exactly as wide as it, so you have to time it, and a guard walking a loop round the last crusher |
-| Level05 | <img src="Docs/level05.png" width="320"> | Two speed pickups 16 m apart in the corridor, so the second one comes 1.7 s after the first | Everything so far: a ping-pong guard, a guard that chases, spikes, a crusher near the goal and a bounce pad up to a coin on a pillar |
+| A | Harmony · base hue | triadic · 246° | Indigo (246°) for the world and the panels, coral (6°) for danger, green (126°) for everything good: coins, the goal, pads, full health |
+| A | Dark · mid · light | #1B1838 · #5B4ECF · #EAE8FA | Panels · buttons and walls · text and the player. Light on dark is 14.11 : 1, so the dark panel can carry any text |
+| A | Accents | #FF6C5C · #5EE06B | Coral for hazards, low health and "Game over"; green for coins and the bar. In the level, hazards use coral at a dark value (#240806), so in grayscale they are the darkest thing on a mid floor, the player is the lightest, and coins are light but smaller and spinning (see the grayscale shot) |
+| A | Coins text (#5EE06B) on its panel (#1B1838) | 10.01 : 1 | Measured with the WCAG formula. The other HUD pairs: time and lives 14.11, the muted "Health" label (#B8B4D9) 8.56, "Game over" in coral 6.12 |
+| A | Button label (#EAE8FA) on the button (#5B4ECF) | 5.07 : 1 | Over 4.5 for 40 px bold labels. A locked level button is tinted darker, and its label is then 9.83 : 1 |
+| B | Music · SFX groups, as mixed | 0 dB · 0 dB | The faders are what the sliders set. The balance is on the sources: the music's AudioSource is at 0.5 (−6 dB), so the effects sit on top of it |
+| B | Slider at 1 · 0.5 · 0.0001 | 0 dB · −6.02 dB · −80 dB | `Mathf.Log10(v) * 20`, read back from the mixer with GetFloat in my test. The slider's minimum is 0.0001, because Log10(0) is minus infinity |
+| C | Guard hum, in Level03 (and the guards in 04 and 05) | Logarithmic · Min 1.5 m · Max 12 m | 1.5 m is about the guard's size, so it's full volume when it's touching you. It notices you at 6 m, so at 6 m the hum is already a quarter as loud (−12 dB), a warning before it chases. At 12 m it stops fading at −18 dB, quiet but still telling you a guard is somewhere |
+| C | Goal beacon, in Level01 (and every level) | Linear · Min 3 m · Max 30 m | 3 m is about the goal pad (2.5 m wide). Linear goes silent at 30 m, and my goals are 37–60 m from the start, so the bell isn't heard at the start and grows as you get close: it tells you you're getting there |
+| C | AudioListener | On the player (`ListenerOnPlayer` on a Listener object), camera's removed | My camera follows from 6 m up and 8 m back, 10 m from the player. With the listener on it, a guard right beside the player would be 10 m away and almost silent. The menus have no player, so their camera keeps it |
+| D | `unlocked` | int · default 1 | A new player, or one after Clear All PlayerPrefs, has Level 1 open and nothing else |
+| D | `best1` … `best5` | float · HasKey first | No default makes sense for a best time, so `SaveData.HasBest` asks HasKey before reading, and the menu shows "New" for a level never finished |
+| D | `MusicVolume` (and `SfxVolume`) | float · default 1 | Full volume until the player moves a slider. A default of 0 would read as −80 dB, silence |
 
-## The numbers
+## Answers
 
-| Number | Value | Why this value |
-|---|---|---|
-| Patrol speed | 2 m/s | A third of my 6 m/s run, so you can walk past a guard's route without it feeling like a race. |
-| Chase speed | 3.5 m/s | Still slower than the 6 m/s run, so you always gain 2.5 m/s on a guard by running away. |
-| Chase range | 6 m, give up at 9 m | The guard's loop in Level03 is 13 m by 13 m round an 8 m block, so with 6 m it notices you when you come round its side of the block, not from across the yard. You get from 6 m to 9 m in 3 / 2.5 = 1.2 s of running, and because it only gives up at 9 m it can't flicker between chasing and not at one edge. |
-| Knockback | 8 N·s, Impulse, and 0.25 s with no steering | The player is 1 kg, so it's 8 m/s straight away from the hazard. For 0.25 s that is about 2 m, and in play it threw me 1.76 m. That is enough to clear the 1 m spike strips and the edge of a 2.4 m crusher pad. |
-| I-frames | 1 s | The knockback has you clear in 0.25 s and at 6 m/s you're off a 3 m patch in 0.5 s, so 1 s is enough time to get away. Standing still on the spikes still costs one heart a second, not fifty. |
-| Power-up duration | 5 s at ×1.6 | 9.6 m/s for 5 s is 48 m. That gets you down the 24 m corridor and well into the 33 m yard in Level05, but not across the whole 66 m level, so where you use it matters. |
-| Bounce speed | 9 m/s, VelocityChange | v² / 2g = 81 / 19.6 = 4.1 m, and in play the player went up 4.12 m. The blocks in Level01 and Level05 are 3 m, so you land on top with room to spare. |
-| Crusher warning | 0.7 s, after 2 s of rest, strike 0.4 s | 0.7 s is well over a reaction time of about 0.25 s, so you can see the warning and still get off the 2.4 m pad. |
-| Respawn | after 0.6 s, with 1.5 s of protection | The beat stops the hit's knockback landing on the respawned player, and the protection means a guard near the start can't take a heart as soon as you appear. |
+1. **What `Time.timeScale = 0` stops in my game, and what it doesn't:** It stops physics, so the player, the guards and the crushers freeze. It stops WaitForSeconds too, so the respawn delay and the crusher's cycle wait, and it stops the level timer. Update still runs, so `PauseMenu` can still read Esc, and `PlayerController.Update` has to return early. The health bar's lag, the hit flash, the loading bar and the credits roll use unscaled time. Audio isn't time, so I pause the world sounds with `AudioListener.pause`.
 
-## Short answers
+2. **What survives a LoadScene in my game, and how:** `PersistentMusic` and `SfxPlayer` survive through `DontDestroyOnLoad`. Each has the singleton check, so the copy in the next scene destroys itself. Statics survive as well: `PauseMenu.IsPaused`, `SfxPlayer.Instance`, `Time.timeScale` and `AudioListener.pause`. That's why every menu load calls `Resume()` first, and why `LevelLoader.Load` sets the time scale back to 1. PlayerPrefs are on disk, so they outlast quitting. The HUD, the loader and the GameManager are made again in each scene.
 
-**1. Why does a trigger need a Rigidbody on at least one of the two objects?**
+3. **Why every PlayerPrefs read in my game has a default:** On a first run, or after Clear All PlayerPrefs, none of my keys exist, so every read returns its default. `unlocked` defaults to 1, so Level 1 is open. The volumes default to 1, not to 0, which would mean −80 dB. A best time has no safe default, because 0 would beat every real time. So `SaveData` checks `HasKey` first, and the menu shows "New" instead of "Best 0.0 s".
 
-Unity only checks a pair of colliders for overlaps when at least one of them is attached to a Rigidbody. Two colliders with no Rigidbody are treated as static scenery, so OnTriggerEnter is never called. In my game the player's Rigidbody is what makes the coins, spikes, bounce pad, goal and kill zone fire. The guards move themselves, so each has its own kinematic Rigidbody as well.
+4. **An exception a forgotten unsubscribe would throw, and why mine can't:** Suppose `HitFlash` used `+=` on an event that outlives the scene, like a static one, and never used `−=`. After a restart the event would still hold the old, destroyed HitFlash. The next hit would call it, and `image.color` would throw a MissingReferenceException. Every `+=` in my OnEnables has a `−=` in OnDisable, which runs when the scene unloads, so nothing old is left on the list. My events are also on the player's Health, not static.
 
-**2. Which ForceMode do your knockback and your Part A force use, and why each?**
+## Checks before submitting
 
-The knockback is `ForceMode.Impulse` with 8, called once when a hit lands. It's one kick that depends on mass, so the 1 kg player goes off at 8 m/s, and `Knockback()` stops my controller steering for 0.25 s so the next step doesn't wipe it. The bounce pad uses `ForceMode.VelocityChange`, also once, from `OnTriggerEnter`. It ignores mass, and I subtract the current falling speed first, so every bounce goes up at exactly 9 m/s however you land on it.
+I ran these as play-mode tests:
+- After clearing PlayerPrefs, only Level 1 is open.
+- A win saves a best time and unlocks the next level, the menu shows both, and the loading bar reaches 100%.
+- Three trips from the menu to a level and back leave one music player and one SfxPlayer.
+- Pause, then arrow down and Enter on Restart: the level comes back running and the player can walk.
+- Game over, then Restart, works the same way.
+- A hit has four listeners and the bar's lag behaves as set.
+- The slider gives 0 / −6.02 / −80 dB and is saved.
+- Every scene has exactly one AudioListener.
+- Winning Level 5 leads to Credits, and Credits leads back to the menu.
 
-**3. What does your code do when a second power-up is picked up while one is running?**
+## Credits
 
-It refreshes. `BoostSpeed` stops the running `Boost` coroutine with `StopCoroutine` and starts a new one, so the 5 s start again from the second pickup. Two pickups 3 s apart end the boost at 8 s, and my test checked it was still on at 7.3 s and off after 8 s. The coroutine runs on the player, so destroying the pickup doesn't stop the timer.
-
-**4. Why can `==` fail as an arrival check, and when does it work?**
-
-`Vector3 ==` is only true when the two points are within about 0.00001 m. A guard moving a whole step each frame (3.5 m/s × 0.02 s = 7 cm) almost never lands that close, so it overshoots, turns round and shivers on the waypoint. It only works straight after `Vector3.MoveTowards`, which lands exactly on the target on the last step. I check arrival by distance instead, with `arriveDistance` 0.1 m, which is bigger than one step.
+- Every sound effect and the music track (`Assets/Audio`) were made for this game, so there are no outside sounds or tracks to credit.
+- Liberation Sans · from TextMesh Pro's Essential Resources (Unity) · SIL Open Font License 1.1
+- The scripts follow CS464 Lectures 08–10: HealthBar, PauseMenu, SfxPlayer, VolumeSlider, PersistentMusic, LevelLoader, SaveData, LevelSelect and ListenerOnPlayer.
