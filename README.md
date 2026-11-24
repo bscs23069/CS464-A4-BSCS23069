@@ -1,6 +1,6 @@
 # CS464 Assignment 04 · Mayasa Fakhar · BSCS23069
 
-**Video (90–180 s):** [VIDEO LINK]
+**Video (90–180 s):** https://drive.google.com/file/d/1ZqbBVljMwQf5cPMo4yzNFDfGOMqeMOgA/view?usp=sharing
 
 <p>
 <img src="Docs/hud-16x9.png" width="320" alt="The HUD at 16:9">
